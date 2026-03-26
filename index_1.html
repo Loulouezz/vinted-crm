@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vinted CRM</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:#f4f3ef; --surface:#fff; --surface2:#eeecea; --border:rgba(0,0,0,0.09); --border2:rgba(0,0,0,0.17);
+      --text:#181816; --text2:#6b6b67; --text3:#b0b0ad;
+      --teal:#09B1BA; --teal-bg:#e0f7f8;
+      --green:#0B7B5A; --green-bg:#e1f5ee;
+      --red:#C03A2C; --red-bg:#fcebeb;
+      --amber:#7a4a0a; --amber-bg:#faeeda;
+      --blue:#185FA5; --blue-bg:#e6f1fb;
+      --r:10px; --rl:14px;
+    }
+    @media(prefers-color-scheme:dark){
+      :root{
+        --bg:#121210; --surface:#1c1c1a; --surface2:#242422; --border:rgba(255,255,255,0.09); --border2:rgba(255,255,255,0.17);
+        --text:#f0ede8; --text2:#9a9a97; --text3:#585856;
+        --teal-bg:#0b3234; --green-bg:#0a2d22; --red-bg:#2c1210; --amber-bg:#2e1e08; --blue-bg:#0e2440;
+      }
+    }
+    body { font-family:'Sora',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+    /* NAV */
+    nav { display:flex; align-items:center; justify-content:space-between; padding:1rem 2rem; background:var(--surface); border-bottom:0.5px solid var(--border); position:sticky; top:0; z-index:50; gap:12px; flex-wrap:wrap; }
+    .nav-logo { display:flex; align-items:center; gap:10px; }
+    .logo-icon { width:34px; height:34px; background:var(--teal); border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:600; color:#fff; flex-shrink:0; }
+    .logo-text { font-size:16px; font-weight:500; }
+    .nav-tabs { display:flex; gap:4px; }
+    .tab { padding:7px 15px; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer; border:none; background:none; color:var(--text2); font-family:'Sora',sans-serif; transition:all .15s; }
+    .tab:hover { background:var(--surface2); color:var(--text); }
+    .tab.active { background:var(--teal-bg); color:var(--teal); }
+
+    /* BTN */
+    .btn { padding:8px 16px; border-radius:var(--r); font-family:'Sora',sans-serif; font-size:13px; font-weight:500; cursor:pointer; border:none; transition:all .15s; }
+    .btn-primary { background:var(--teal); color:#fff; }
+    .btn-primary:hover { opacity:.85; }
+    .btn-ghost { background:none; border:0.5px solid var(--border2); color:var(--text); }
+    .btn-ghost:hover { background:var(--surface2); }
+    .btn-sm { padding:6px 12px; font-size:12px; }
+
+    /* PAGES */
+    .page { display:none; }
+    .page.active { display:block; }
+    .wrapper { max-width:1000px; margin:0 auto; padding:2rem 1.5rem 4rem; }
+
+    /* METRICS */
+    .metrics { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:1.75rem; }
+    .metric { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--rl); padding:1.1rem 1.25rem; }
+    .m-label { font-size:10px; font-weight:500; text-transform:uppercase; letter-spacing:.07em; color:var(--text2); margin-bottom:7px; }
+    .m-value { font-family:'DM Mono',monospace; font-size:21px; font-weight:500; }
+    .m-sub { font-size:11px; color:var(--text3); margin-top:4px; }
+    .pos { color:var(--green) !important; }
+    .neg { color:var(--red) !important; }
+    .neutral { color:var(--teal) !important; }
+    .amber { color:var(--amber) !important; }
+    .purple { color:#534AB7 !important; }
+
+    /* CHARTS */
+    .charts-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:1.75rem; }
+    @media(max-width:680px){ .charts-grid { grid-template-columns:1fr; } }
+    .card { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--rl); padding:1.25rem 1.4rem; }
+    .card-title { font-size:11px; font-weight:500; text-transform:uppercase; letter-spacing:.07em; color:var(--text2); margin-bottom:1rem; }
+
+    /* TABLE */
+    .table-card { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--rl); overflow:hidden; }
+    .table-top { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.4rem; border-bottom:0.5px solid var(--border); background:var(--surface2); }
+    .section-title { font-size:11px; font-weight:500; text-transform:uppercase; letter-spacing:.07em; color:var(--text2); }
+    table { width:100%; border-collapse:collapse; }
+    thead th { padding:10px 14px; font-size:10px; font-weight:500; text-transform:uppercase; letter-spacing:.07em; color:var(--text2); text-align:left; border-bottom:0.5px solid var(--border); }
+    tbody td { padding:10px 14px; font-size:13px; border-bottom:0.5px solid var(--border); color:var(--text); }
+    tbody tr:last-child td { border-bottom:none; }
+    tbody tr:hover td { background:var(--surface2); }
+    td.mono { font-family:'DM Mono',monospace; font-size:12px; }
+    td.bold { font-weight:500; }
+    .tag { display:inline-block; padding:3px 9px; border-radius:5px; font-size:11px; font-weight:500; }
+    .tag-vet { background:var(--green-bg); color:var(--green); }
+    .tag-cha { background:var(--blue-bg); color:var(--blue); }
+    .tag-acc { background:var(--amber-bg); color:var(--amber); }
+    .tag-dec { background:#EEEDFE; color:#534AB7; }
+    .tag-aut { background:var(--surface2); color:var(--text2); }
+    .tag-dep { background:var(--red-bg); color:var(--red); }
+    .badge { display:inline-block; padding:2px 10px; border-radius:20px; font-size:11px; font-weight:500; background:var(--teal-bg); color:var(--teal); }
+    .btn-del { background:none; border:none; cursor:pointer; color:var(--text3); font-size:13px; padding:4px 8px; border-radius:6px; transition:all .15s; }
+    .btn-del:hover { color:var(--red); background:var(--red-bg); }
+    .empty { text-align:center; padding:3rem 1rem; color:var(--text3); font-size:14px; }
+    .empty .icon { font-size:36px; display:block; margin-bottom:12px; }
+
+    /* IMPORT */
+    .import-steps { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:1.75rem; }
+    .step-card { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--rl); padding:1rem 1.2rem; display:flex; gap:12px; align-items:flex-start; }
+    .step-num { width:26px; height:26px; border-radius:50%; background:var(--teal-bg); color:var(--teal); font-size:12px; font-weight:600; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .step-card h4 { font-size:13px; font-weight:500; margin-bottom:3px; }
+    .step-card p { font-size:11px; color:var(--text2); line-height:1.5; }
+    .drop-zone { border:2px dashed var(--border2); border-radius:var(--rl); padding:2.5rem 2rem; text-align:center; cursor:pointer; transition:all .2s; background:var(--surface); margin-bottom:1.25rem; }
+    .drop-zone:hover, .drop-zone.drag { border-color:var(--teal); background:var(--teal-bg); }
+    .drop-zone .icon { font-size:36px; display:block; margin-bottom:10px; }
+    .drop-zone h3 { font-size:15px; font-weight:500; margin-bottom:6px; }
+    .drop-zone p { font-size:12px; color:var(--text2); line-height:1.6; }
+    .info-bar { background:var(--teal-bg); border:0.5px solid rgba(9,177,186,.3); border-radius:var(--r); padding:10px 14px; font-size:12px; color:var(--teal); margin-bottom:1.25rem; }
+    .import-log { background:var(--surface2); border-radius:var(--r); padding:1rem 1.25rem; font-size:12px; font-family:'DM Mono',monospace; color:var(--text2); margin-bottom:1.25rem; display:none; line-height:1.8; }
+    .code-example { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--r); padding:1rem 1.25rem; font-family:'DM Mono',monospace; font-size:12px; color:var(--text2); line-height:2; }
+
+    /* COMPTA */
+    .period-row { display:flex; gap:8px; margin-bottom:1.5rem; flex-wrap:wrap; align-items:center; }
+    .period-btn { padding:6px 14px; border-radius:8px; font-size:12px; font-weight:500; cursor:pointer; border:0.5px solid var(--border2); background:none; color:var(--text2); font-family:'Sora',sans-serif; transition:all .15s; }
+    .period-btn.active { background:var(--teal); color:#fff; border-color:var(--teal); }
+    .period-btn:hover:not(.active) { background:var(--surface2); }
+    .dep-form { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--rl); padding:1.25rem 1.4rem; margin-bottom:1.5rem; }
+    .dep-grid { display:grid; grid-template-columns:1fr 1fr 1fr 120px auto; gap:10px; align-items:end; }
+    @media(max-width:700px){ .dep-grid { grid-template-columns:1fr 1fr; } }
+    .dep-grid label { font-size:11px; font-weight:500; text-transform:uppercase; letter-spacing:.06em; color:var(--text2); display:block; margin-bottom:5px; }
+    .dep-grid input, .dep-grid select { width:100%; padding:8px 11px; border:0.5px solid var(--border2); border-radius:var(--r); background:var(--bg); color:var(--text); font-family:'Sora',sans-serif; font-size:13px; outline:none; transition:border-color .15s; }
+    .dep-grid input:focus, .dep-grid select:focus { border-color:var(--teal); }
+    .compta-metrics { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:1.75rem; }
+    .cm { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--rl); padding:1rem 1.25rem; }
+    .cm-accent { width:3px; height:24px; border-radius:2px; margin-bottom:10px; }
+    .cm-label { font-size:10px; font-weight:500; text-transform:uppercase; letter-spacing:.07em; color:var(--text2); margin-bottom:5px; }
+    .cm-value { font-family:'DM Mono',monospace; font-size:20px; font-weight:500; }
+    .cm-sub { font-size:11px; color:var(--text3); margin-top:4px; }
+
+    /* MODAL */
+    .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:200; align-items:center; justify-content:center; padding:1rem; }
+    .overlay.open { display:flex; }
+    .modal { background:var(--surface); border-radius:var(--rl); padding:1.75rem; width:100%; max-width:420px; border:0.5px solid var(--border2); }
+    .modal h2 { font-size:16px; font-weight:500; margin-bottom:1.5rem; }
+    .form-row { margin-bottom:14px; }
+    .form-row label { display:block; font-size:11px; font-weight:500; text-transform:uppercase; letter-spacing:.06em; color:var(--text2); margin-bottom:6px; }
+    .form-row input, .form-row select { width:100%; padding:9px 12px; border:0.5px solid var(--border2); border-radius:var(--r); background:var(--bg); color:var(--text); font-family:'Sora',sans-serif; font-size:13px; outline:none; transition:border-color .15s; }
+    .form-row input:focus, .form-row select:focus { border-color:var(--teal); }
+    .form-grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:1.5rem; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">
+    <div class="logo-icon">V</div>
+    <span class="logo-text">Vinted CRM</span>
+  </div>
+  <div class="nav-tabs">
+    <button class="tab active" onclick="showPage('dashboard')">Dashboard</button>
+    <button class="tab" onclick="showPage('import')">Import CSV</button>
+    <button class="tab" onclick="showPage('ventes')">Ventes</button>
+    <button class="tab" onclick="showPage('compta')">Compta</button>
+  </div>
+  <button class="btn btn-ghost btn-sm" onclick="openModal()">+ Vente manuelle</button>
+</nav>
+
+<!-- DASHBOARD -->
+<div id="page-dashboard" class="page active">
+  <div class="wrapper">
+    <div id="dash-metrics" class="metrics"></div>
+    <div class="charts-grid">
+      <div class="card"><div class="card-title">CA &amp; Bénéfice — 12 mois</div><div style="position:relative;height:200px"><canvas id="c-evo"></canvas></div></div>
+      <div class="card"><div class="card-title">Répartition CA par catégorie</div><div style="position:relative;height:200px"><canvas id="c-cat"></canvas></div></div>
+      <div class="card"><div class="card-title">Bénéfice mensuel net</div><div style="position:relative;height:180px"><canvas id="c-ben"></canvas></div></div>
+      <div class="card"><div class="card-title">Répartition revenus vs charges</div><div style="position:relative;height:180px"><canvas id="c-frais"></canvas></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT CSV -->
+<div id="page-import" class="page">
+  <div class="wrapper">
+    <div class="import-steps">
+      <div class="step-card"><div class="step-num">1</div><div><h4>Allez sur Vinted</h4><p>Paramètres → Confidentialité → Télécharger mes données personnelles</p></div></div>
+      <div class="step-card"><div class="step-num">2</div><div><h4>Récupérez le fichier</h4><p>Vinted envoie un e-mail sous 24h avec un lien de téléchargement ZIP</p></div></div>
+      <div class="step-card"><div class="step-num">3</div><div><h4>Glissez le CSV ici</h4><p>Tout se remplit automatiquement en quelques secondes</p></div></div>
+    </div>
+
+    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('csv-input').click()">
+      <input type="file" id="csv-input" accept=".csv,.txt" style="display:none" onchange="handleFile(this.files[0])" />
+      <span class="icon">📂</span>
+      <h3>Glissez votre fichier CSV ici</h3>
+      <p>ou cliquez pour parcourir<br>Formats : .csv — export Vinted ou format personnalisé</p>
+    </div>
+
+    <div class="info-bar">ℹ️ Les frais Vinted (5% + 0,70 €) sont calculés automatiquement si absents du fichier.</div>
+    <div id="import-log" class="import-log"></div>
+
+    <div class="section-title" style="margin-bottom:.75rem">Format CSV accepté</div>
+    <div class="code-example">
+      titre,categorie,prix_vente,prix_achat,date<br>
+      Veste Zara M,Vêtements,25.00,5.00,2024-03-15<br>
+      Nike Air Force 42,Chaussures,60.00,30.00,2024-03-20<br>
+      <span style="color:var(--text3);font-size:11px">// Les colonnes prix_achat et frais_vinted sont optionnelles</span>
+    </div>
+  </div>
+</div>
+
+<!-- VENTES -->
+<div id="page-ventes" class="page">
+  <div class="wrapper">
+    <div class="table-card">
+      <div class="table-top">
+        <span class="section-title">Historique des ventes</span>
+        <span class="badge" id="ventes-badge">0 vente</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Article</th><th>Catégorie</th><th>Date</th><th>Prix vente</th><th>Coût achat</th><th>Frais Vinted</th><th>Bénéfice net</th><th></th></tr></thead>
+          <tbody id="ventes-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COMPTA -->
+<div id="page-compta" class="page">
+  <div class="wrapper">
+    <div class="period-row">
+      <span style="font-size:12px;color:var(--text2)">Période :</span>
+      <button class="period-btn active" onclick="setPeriod(this,'all')">Tout</button>
+      <button class="period-btn" onclick="setPeriod(this,'year')">Cette année</button>
+      <button class="period-btn" onclick="setPeriod(this,'q')">Ce trimestre</button>
+      <button class="period-btn" onclick="setPeriod(this,'month')">Ce mois</button>
+    </div>
+
+    <div class="compta-metrics" id="compta-metrics"></div>
+
+    <div class="dep-form">
+      <div class="section-title" style="margin-bottom:1rem">Ajouter une dépense</div>
+      <div class="dep-grid">
+        <div><label>Description</label><input id="dep-desc" type="text" placeholder="ex: Emballages" /></div>
+        <div><label>Type</label>
+          <select id="dep-type"><option>Emballage</option><option>Frais de port</option><option>Achat articles</option><option>Abonnement</option><option>Autre</option></select>
+        </div>
+        <div><label>Date</label><input id="dep-date" type="date" /></div>
+        <div><label>Montant (€)</label><input id="dep-montant" type="number" min="0" step="0.01" placeholder="0.00" /></div>
+        <div><label>&nbsp;</label><button class="btn btn-primary" onclick="addDepense()" style="width:100%;padding:8px">Ajouter</button></div>
+      </div>
+    </div>
+
+    <div class="charts-grid" style="margin-bottom:1.75rem">
+      <div class="card"><div class="card-title">Résultat mensuel net</div><div style="position:relative;height:200px"><canvas id="c-res"></canvas></div></div>
+      <div class="card"><div class="card-title">Répartition des charges</div><div style="position:relative;height:200px"><canvas id="c-dep"></canvas></div></div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-top">
+        <span class="section-title">Dépenses</span>
+        <span class="badge" id="dep-badge">0</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Description</th><th>Type</th><th>Date</th><th>Montant</th><th></th></tr></thead>
+          <tbody id="dep-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2>Nouvelle vente manuelle</h2>
+    <div class="form-row"><label>Article</label><input id="f-name" type="text" placeholder="ex: Veste Zara M" /></div>
+    <div class="form-row"><label>Catégorie</label>
+      <select id="f-cat"><option>Vêtements</option><option>Chaussures</option><option>Accessoires</option><option>Décoration</option><option>Autre</option></select>
+    </div>
+    <div class="form-grid2">
+      <div class="form-row"><label>Prix de vente (€)</label><input id="f-price" type="number" min="0" step="0.01" placeholder="0.00" /></div>
+      <div class="form-row"><label>Coût d'achat (€)</label><input id="f-cost" type="number" min="0" step="0.01" placeholder="0.00" /></div>
+    </div>
+    <div class="form-row"><label>Date</label><input id="f-date" type="date" /></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-primary" onclick="addSale()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──
+let sales    = JSON.parse(localStorage.getItem('vcrm_s2') || '[]');
+let depenses = JSON.parse(localStorage.getItem('vcrm_d1') || '[]');
+let period   = 'all';
+let charts   = {};
+
+function save() {
+  localStorage.setItem('vcrm_s2', JSON.stringify(sales));
+  localStorage.setItem('vcrm_d1', JSON.stringify(depenses));
+}
+
+// ── NAVIGATION ──
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  const labels = { dashboard:'dashboard', import:'import csv', ventes:'ventes', compta:'compta' };
+  document.querySelectorAll('.tab').forEach(t => {
+    if (t.textContent.toLowerCase() === labels[name]) t.classList.add('active');
+  });
+  renderAll();
+}
+
+// ── PERIOD ──
+function setPeriod(btn, p) {
+  document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  period = p;
+  renderAll();
+}
+
+function byPeriod(arr) {
+  const now = new Date();
+  if (period === 'all') return arr;
+  return arr.filter(s => {
+    const d = new Date((s.date || '2020-01-01') + 'T00:00:00');
+    if (period === 'year')  return d.getFullYear() === now.getFullYear();
+    if (period === 'month') return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    if (period === 'q') {
+      const q = Math.floor(now.getMonth() / 3);
+      return d.getFullYear() === now.getFullYear() && Math.floor(d.getMonth() / 3) === q;
+    }
+    return true;
+  });
+}
+
+// ── HELPERS ──
+function fmt(n) { return isNaN(n) ? '0,00 €' : n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' €'; }
+function fmtN(n) { return isNaN(n) ? '0,00' : n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fraisVinted(p) { return +(p * 0.05 + 0.70).toFixed(2); }
+const CAT_CLS = { 'Vêtements':'tag-vet','Chaussures':'tag-cha','Accessoires':'tag-acc','Décoration':'tag-dec' };
+function tagCls(c) { return CAT_CLS[c] || 'tag-aut'; }
+
+function last12() {
+  const m = {}, now = new Date();
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    m[`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`] = { ca:0, ben:0, dep:0 };
+  }
+  return m;
+}
+
+function killChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+function baseOpts() {
+  return {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: c => c.dataset.label+' : '+c.parsed.y.toFixed(2)+' €' } } },
+    scales:{ x:{ grid:{display:false}, ticks:{font:{size:10},color:'#888'} }, y:{ grid:{color:'rgba(128,128,128,.08)'}, ticks:{font:{size:10},color:'#888',callback:v=>v+'€'} } }
+  };
+}
+
+// ── CSV IMPORT ──
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag'); if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+
+function handleFile(file) {
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = e => parseCSV(e.target.result, file.name);
+  r.readAsText(file, 'UTF-8');
+}
+
+function parseCSV(text, fname) {
+  const log = document.getElementById('import-log');
+  log.style.display = 'block';
+  const lines = text.trim().split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 2) { log.innerHTML = '❌ Fichier vide ou invalide.'; return; }
+
+  const normalize = h => h.trim().toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/\s+/g,'_')
+    .replace('prix_de_vente','prix_vente').replace('prix_d_achat','prix_achat')
+    .replace('cout_achat','prix_achat').replace('cost','prix_achat').replace('price','prix_vente')
+    .replace('nom','titre').replace('name','titre').replace('article','titre')
+    .replace(/^cat$|^categorie$|^category$/,'categorie');
+
+  const headers = lines[0].split(',').map(normalize);
+  const idx = k => headers.indexOf(k);
+  const iN = idx('titre'), iC = idx('categorie'), iP = idx('prix_vente'), iA = idx('prix_achat'), iD = idx('date'), iF = idx('frais_vinted');
+
+  let added = 0, skip = 0;
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g,''));
+    if (cols.length < 2) { skip++; continue; }
+    const nom   = iN >= 0 ? cols[iN] : 'Article';
+    const cat   = iC >= 0 ? cols[iC] : 'Autre';
+    const prix  = iP >= 0 ? parseFloat(cols[iP]) : 0;
+    const achat = iA >= 0 ? parseFloat(cols[iA]) : 0;
+    const date  = iD >= 0 ? normDate(cols[iD]) : new Date().toISOString().slice(0,10);
+    const frais = iF >= 0 ? parseFloat(cols[iF]) : fraisVinted(prix);
+    if (!nom || isNaN(prix) || prix <= 0) { skip++; continue; }
+    sales.push({ id: Date.now()+i, name:nom, cat, price:prix, cost:isNaN(achat)?0:achat, frais, date });
+    added++;
+  }
+  save(); renderAll();
+  log.innerHTML = `✅ <strong>${added}</strong> vente(s) importée(s) depuis <em>${fname}</em>${skip?` — ${skip} ligne(s) ignorée(s)`:''}<br>Frais Vinted automatiquement calculés sur les lignes sans données.`;
+  setTimeout(() => showPage('dashboard'), 600);
+}
+
+function normDate(s) {
+  if (!s) return new Date().toISOString().slice(0,10);
+  s = s.replace(/\//g,'-');
+  if (/^\d{2}-\d{2}-\d{4}$/.test(s)) { const [d,m,y]=s.split('-'); return `${y}-${m}-${d}`; }
+  return s.slice(0,10);
+}
+
+// ── MODAL ──
+function openModal() {
+  ['f-name','f-price','f-cost'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('overlay').classList.add('open');
+  setTimeout(() => document.getElementById('f-name').focus(), 100);
+}
+function closeModal() { document.getElementById('overlay').classList.remove('open'); }
+document.getElementById('overlay').addEventListener('click', e => { if(e.target===e.currentTarget) closeModal(); });
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
+
+function addSale() {
+  const name  = document.getElementById('f-name').value.trim();
+  const cat   = document.getElementById('f-cat').value;
+  const price = parseFloat(document.getElementById('f-price').value) || 0;
+  const cost  = parseFloat(document.getElementById('f-cost').value)  || 0;
+  const date  = document.getElementById('f-date').value;
+  if (!name||!date) { alert('Article et date obligatoires.'); return; }
+  sales.unshift({ id:Date.now(), name, cat, price, cost, frais:fraisVinted(price), date });
+  save(); renderAll(); closeModal();
+}
+
+function delSale(id) {
+  if (!confirm('Supprimer cette vente ?')) return;
+  sales = sales.filter(s => s.id !== id); save(); renderAll();
+}
+
+// ── DÉPENSES ──
+document.getElementById('dep-date').value = new Date().toISOString().slice(0,10);
+
+function addDepense() {
+  const desc    = document.getElementById('dep-desc').value.trim();
+  const type    = document.getElementById('dep-type').value;
+  const date    = document.getElementById('dep-date').value;
+  const montant = parseFloat(document.getElementById('dep-montant').value) || 0;
+  if (!desc||!montant) { alert('Description et montant obligatoires.'); return; }
+  depenses.unshift({ id:Date.now(), desc, type, date, montant });
+  document.getElementById('dep-desc').value = '';
+  document.getElementById('dep-montant').value = '';
+  save(); renderAll();
+}
+
+function delDep(id) {
+  if (!confirm('Supprimer ?')) return;
+  depenses = depenses.filter(d => d.id !== id); save(); renderAll();
+}
+
+// ── RENDER ──
+function renderAll() { renderDash(); renderVentes(); renderCompta(); }
+
+function renderDash() {
+  const fs = byPeriod(sales);
+  const ca    = fs.reduce((a,s) => a+s.price, 0);
+  const cost  = fs.reduce((a,s) => a+s.cost,  0);
+  const frais = fs.reduce((a,s) => a+(s.frais||fraisVinted(s.price)), 0);
+  const fdep  = byPeriod(depenses).reduce((a,d) => a+d.montant, 0);
+  const ben   = ca - cost - frais - fdep;
+  const marge = ca > 0 ? ben/ca*100 : 0;
+  const avg   = fs.length ? ca/fs.length : 0;
+
+  document.getElementById('dash-metrics').innerHTML = `
+    <div class="metric"><div class="m-label">Chiffre d'affaires</div><div class="m-value neutral">${fmtN(ca)} €</div><div class="m-sub">${fs.length} vente(s)</div></div>
+    <div class="metric"><div class="m-label">Bénéfice net</div><div class="m-value ${ben>=0?'pos':'neg'}">${fmtN(ben)} €</div><div class="m-sub">Marge : ${marge.toFixed(1)}%</div></div>
+    <div class="metric"><div class="m-label">Total charges</div><div class="m-value neg">${fmtN(cost+frais+fdep)} €</div><div class="m-sub">Achats + frais + dépenses</div></div>
+    <div class="metric"><div class="m-label">Prix moyen</div><div class="m-value">${fmtN(avg)} €</div><div class="m-sub">Par article vendu</div></div>
+  `;
+
+  // Chart évolution
+  const months = last12();
+  sales.forEach(s => { const k=s.date.slice(0,7); if(months[k]){ months[k].ca+=s.price; months[k].ben+=s.price-s.cost-(s.frais||fraisVinted(s.price)); } });
+  const lbs   = Object.keys(months).map(k => new Date(k+'-01').toLocaleDateString('fr-FR',{month:'short'}));
+  const caD   = Object.values(months).map(m => +m.ca.toFixed(2));
+  const benD  = Object.values(months).map(m => +m.ben.toFixed(2));
+
+  killChart('evo');
+  charts['evo'] = new Chart(document.getElementById('c-evo'), {
+    type:'bar',
+    data:{ labels:lbs, datasets:[
+      { label:'CA', data:caD, backgroundColor:'rgba(9,177,186,.18)', borderColor:'#09B1BA', borderWidth:1.5, borderRadius:4, order:2 },
+      { label:'Bénéfice', data:benD, type:'line', borderColor:'#0B7B5A', borderWidth:2, pointRadius:3, pointBackgroundColor:'#0B7B5A', tension:.3, fill:false, order:1 }
+    ]},
+    options: baseOpts()
+  });
+
+  // Chart catégories
+  const cats = {};
+  fs.forEach(s => { cats[s.cat] = (cats[s.cat]||0)+s.price; });
+  killChart('cat');
+  charts['cat'] = new Chart(document.getElementById('c-cat'), {
+    type:'doughnut',
+    data:{ labels:Object.keys(cats), datasets:[{ data:Object.values(cats), backgroundColor:['#09B1BA','#0B7B5A','#C03A2C','#534AB7','#854F0B'], borderWidth:0 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'right', labels:{font:{size:11},boxWidth:10,padding:10} } } }
+  });
+
+  // Chart bénéfice mensuel
+  killChart('ben');
+  charts['ben'] = new Chart(document.getElementById('c-ben'), {
+    type:'bar',
+    data:{ labels:lbs, datasets:[{ label:'Bénéfice', data:benD, backgroundColor:benD.map(v=>v>=0?'rgba(11,123,90,.22)':'rgba(192,58,44,.22)'), borderColor:benD.map(v=>v>=0?'#0B7B5A':'#C03A2C'), borderWidth:1.5, borderRadius:4 }] },
+    options: baseOpts()
+  });
+
+  // Chart répartition revenus/charges
+  const allFrais  = sales.reduce((a,s)=>a+(s.frais||fraisVinted(s.price)),0);
+  const allAchats = sales.reduce((a,s)=>a+s.cost,0);
+  const allDep    = depenses.reduce((a,d)=>a+d.montant,0);
+  const allCA     = sales.reduce((a,s)=>a+s.price,0);
+  const allBen    = allCA - allFrais - allAchats - allDep;
+  killChart('frais');
+  charts['frais'] = new Chart(document.getElementById('c-frais'), {
+    type:'doughnut',
+    data:{ labels:['Bénéfice net','Frais Vinted','Coûts achat','Autres dépenses'], datasets:[{ data:[Math.max(0,+allBen.toFixed(2)),+allFrais.toFixed(2),+allAchats.toFixed(2),+allDep.toFixed(2)], backgroundColor:['#09B1BA','#C03A2C','#854F0B','#534AB7'], borderWidth:0 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'right', labels:{font:{size:11},boxWidth:10,padding:10} } } }
+  });
+}
+
+function renderVentes() {
+  const n = sales.length;
+  document.getElementById('ventes-badge').textContent = n+(n<=1?' vente':' ventes');
+  const tbody = document.getElementById('ventes-body');
+  if (!n) { tbody.innerHTML = `<tr><td colspan="8"><div class="empty"><span class="icon">📦</span>Aucune vente. Importez un CSV ou ajoutez manuellement.</div></td></tr>`; return; }
+  tbody.innerHTML = sales.map(s => {
+    const fr = s.frais||fraisVinted(s.price);
+    const bn = s.price - s.cost - fr;
+    const d  = new Date(s.date+'T00:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'});
+    return `<tr>
+      <td class="bold">${s.name}</td>
+      <td><span class="tag ${tagCls(s.cat)}">${s.cat}</span></td>
+      <td class="mono">${d}</td>
+      <td class="mono">${fmt(s.price)}</td>
+      <td class="mono">${fmt(s.cost)}</td>
+      <td class="mono neg">${fmt(fr)}</td>
+      <td class="mono ${bn>=0?'pos':'neg'}">${bn>=0?'+':''}${fmt(bn)}</td>
+      <td><button class="btn-del" onclick="delSale(${s.id})">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderCompta() {
+  const fs = byPeriod(sales);
+  const fd = byPeriod(depenses);
+  const ca     = fs.reduce((a,s)=>a+s.price,0);
+  const achats = fs.reduce((a,s)=>a+s.cost,0);
+  const fraisV = fs.reduce((a,s)=>a+(s.frais||fraisVinted(s.price)),0);
+  const charges= fd.reduce((a,d)=>a+d.montant,0);
+  const total  = achats+fraisV+charges;
+  const res    = ca - total;
+
+  document.getElementById('compta-metrics').innerHTML = `
+    <div class="cm"><div class="cm-accent" style="background:var(--teal)"></div><div class="cm-label">Chiffre d'affaires</div><div class="cm-value neutral">${fmtN(ca)} €</div><div class="cm-sub">Revenus bruts</div></div>
+    <div class="cm"><div class="cm-accent" style="background:var(--red)"></div><div class="cm-label">Total charges</div><div class="cm-value neg">${fmtN(total)} €</div><div class="cm-sub">Tous frais confondus</div></div>
+    <div class="cm"><div class="cm-accent" style="background:#C03A2C"></div><div class="cm-label">Frais Vinted</div><div class="cm-value neg">${fmtN(fraisV)} €</div><div class="cm-sub">5% + 0,70€ / vente</div></div>
+    <div class="cm"><div class="cm-accent" style="background:var(--amber)"></div><div class="cm-label">Achats articles</div><div class="cm-value amber">${fmtN(achats)} €</div><div class="cm-sub">Coûts d'achat</div></div>
+    <div class="cm"><div class="cm-accent" style="background:#534AB7"></div><div class="cm-label">Autres dépenses</div><div class="cm-value purple">${fmtN(charges)} €</div><div class="cm-sub">${fd.length} entrée(s)</div></div>
+    <div class="cm"><div class="cm-accent" style="background:var(--green)"></div><div class="cm-label">Résultat net</div><div class="cm-value ${res>=0?'pos':'neg'}">${fmtN(res)} €</div><div class="cm-sub">CA − toutes charges</div></div>
+  `;
+
+  // Chart résultat mensuel
+  const months = last12();
+  sales.forEach(s => { const k=s.date.slice(0,7); if(months[k]){ months[k].ca+=s.price; months[k].dep+=s.cost+(s.frais||fraisVinted(s.price)); } });
+  depenses.forEach(d => { const k=d.date.slice(0,7); if(months[k]) months[k].dep+=d.montant; });
+  const lbs  = Object.keys(months).map(k => new Date(k+'-01').toLocaleDateString('fr-FR',{month:'short'}));
+  const resD = Object.values(months).map(m => +(m.ca-m.dep).toFixed(2));
+
+  killChart('res');
+  charts['res'] = new Chart(document.getElementById('c-res'), {
+    type:'bar',
+    data:{ labels:lbs, datasets:[{ label:'Résultat', data:resD, backgroundColor:resD.map(v=>v>=0?'rgba(11,123,90,.22)':'rgba(192,58,44,.22)'), borderColor:resD.map(v=>v>=0?'#0B7B5A':'#C03A2C'), borderWidth:1.5, borderRadius:4 }] },
+    options: baseOpts()
+  });
+
+  // Chart répartition charges
+  const depTypes = {};
+  fd.forEach(d => { depTypes[d.type]=(depTypes[d.type]||0)+d.montant; });
+  if (achats > 0) depTypes['Achats articles'] = +achats.toFixed(2);
+  if (fraisV > 0) depTypes['Frais Vinted']    = +fraisV.toFixed(2);
+
+  killChart('dep');
+  charts['dep'] = new Chart(document.getElementById('c-dep'), {
+    type:'doughnut',
+    data:{ labels:Object.keys(depTypes), datasets:[{ data:Object.values(depTypes), backgroundColor:['#09B1BA','#C03A2C','#854F0B','#534AB7','#0B7B5A','#888780'], borderWidth:0 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'right', labels:{font:{size:11},boxWidth:10,padding:10} } } }
+  });
+
+  // Table dépenses
+  document.getElementById('dep-badge').textContent = fd.length;
+  const tbody = document.getElementById('dep-body');
+  if (!fd.length) { tbody.innerHTML = `<tr><td colspan="5"><div class="empty"><span class="icon">💸</span>Aucune dépense enregistrée.</div></td></tr>`; return; }
+  tbody.innerHTML = fd.map(d => {
+    const dt = new Date(d.date+'T00:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'});
+    return `<tr>
+      <td class="bold">${d.desc}</td>
+      <td><span class="tag tag-dep">${d.type}</span></td>
+      <td class="mono">${dt}</td>
+      <td class="mono neg">${fmt(d.montant)}</td>
+      <td><button class="btn-del" onclick="delDep(${d.id})">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+renderAll();
+</script>
+</body>
+</html>
